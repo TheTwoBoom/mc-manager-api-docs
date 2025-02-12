@@ -1,0 +1,182 @@
+openapi: 3.0.0
+info:
+  title: Minecraft Server Management API
+  description: API zur Verwaltung von Minecraft-Servern mit Kubernetes und Discord-Integration
+  version: 1.0.0
+servers:
+  - url: https://api.example.com
+    description: Produktionsserver
+paths:
+  /user:
+    post:
+      summary: Erstelle einen neuen Benutzer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                discord_id:
+                  type: string
+                username:
+                  type: string
+      responses:
+        '200':
+          description: Benutzer erfolgreich erstellt
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user_id:
+                    type: integer
+  /user/{id}:
+    get:
+      summary: Benutzerinformationen abrufen
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Erfolgreiche Antwort
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  discord_id:
+                    type: string
+                  username:
+                    type: string
+  /server/{id}:
+    get:
+      summary: Serverdetails abrufen
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Serverdetails erfolgreich abgerufen
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  server_name:
+                    type: string
+                  server_status:
+                    type: string
+                  created_at:
+                    type: string
+                    format: date-time
+                  cpu_usage:
+                    type: number
+                  ram_usage:
+                    type: number
+                  storage_usage:
+                    type: number
+                  hosting_node:
+                    type: string
+  /server/{id}/status:
+    get:
+      summary: Serverstatus abrufen
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Serverstatus erfolgreich abgerufen
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  server_status:
+                    type: string
+                  cpu_usage:
+                    type: number
+                  ram_usage:
+                    type: number
+                  storage_usage:
+                    type: number
+                  hosting_node:
+                    type: string
+    post:
+      summary: Serverstatus aktualisieren
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                server_status:
+                  type: string
+                  enum: [started, stopped]
+                cpu_usage:
+                  type: number
+                ram_usage:
+                  type: number
+                storage_usage:
+                  type: number
+                hosting_node:
+                  type: string
+      responses:
+        '200':
+          description: Serverstatus erfolgreich aktualisiert
+  /server/{id}/owner:
+    get:
+      summary: Serverbesitzer abrufen
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Serverbesitzer erfolgreich abgerufen
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  owner:
+                    type: string
+  /server/{id}/players:
+    get:
+      summary: Spieler auf dem Server abrufen
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Spieler erfolgreich abgerufen
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  players:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        player_name:
+                          type: string
+                        join_time:
+                          type: string
+                          format: date-time
