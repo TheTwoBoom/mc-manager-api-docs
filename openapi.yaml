@@ -153,30 +153,3 @@ paths:
                 properties:
                   owner:
                     type: string
-  /server/{id}/players:
-    get:
-      summary: Spieler auf dem Server abrufen
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      responses:
-        '200':
-          description: Spieler erfolgreich abgerufen
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  players:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        player_name:
-                          type: string
-                        join_time:
-                          type: string
-                          format: date-time
