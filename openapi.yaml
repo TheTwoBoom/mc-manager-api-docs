@@ -4,152 +4,337 @@ info:
   description: API zur Verwaltung von Minecraft-Servern mit Kubernetes und Discord-Integration
   version: 1.0.0
 servers:
-  - url: https://api.example.com
+  - url: https://api.example.com/v1
     description: Produktionsserver
+tags:
+  - name: Users
+    description: Benutzerverwaltung
+  - name: Servers
+    description: Serververwaltung
+  - name: Files
+    description: Dateiverwaltung
+  - name: Console
+    description: Serverkonsole Interaktion
 paths:
   /user:
     post:
+      tags: [Users]
       summary: Erstelle einen neuen Benutzer
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                discord_id:
-                  type: string
-                username:
-                  type: string
+              $ref: '#/components/schemas/UserCreate'
       responses:
-        '200':
+        '201':
           description: Benutzer erfolgreich erstellt
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  user_id:
-                    type: integer
+                $ref: '#/components/schemas/UserResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
   /user/{id}:
     get:
+      tags: [Users]
       summary: Benutzerinformationen abrufen
       parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
+        - $ref: '#/components/parameters/UserId'
       responses:
         '200':
           description: Erfolgreiche Antwort
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  discord_id:
-                    type: string
-                  username:
-                    type: string
+                $ref: '#/components/schemas/UserResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
   /server/{id}:
     get:
+      tags: [Servers]
       summary: Serverdetails abrufen
       parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
+        - $ref: '#/components/parameters/ServerId'
       responses:
         '200':
           description: Serverdetails erfolgreich abgerufen
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  server_name:
-                    type: string
-                  server_status:
-                    type: string
-                  created_at:
-                    type: string
-                    format: date-time
-                  cpu_usage:
-                    type: number
-                  ram_usage:
-                    type: number
-                  storage_usage:
-                    type: number
-                  hosting_node:
-                    type: string
-  /server/{id}/status:
-    get:
-      summary: Serverstatus abrufen
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      responses:
-        '200':
-          description: Serverstatus erfolgreich abgerufen
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  server_status:
-                    type: string
-                  cpu_usage:
-                    type: number
-                  ram_usage:
-                    type: number
-                  storage_usage:
-                    type: number
-                  hosting_node:
-                    type: string
+                $ref: '#/components/schemas/ServerDetails'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
     post:
+      tags: [Servers]
       summary: Serverstatus aktualisieren
+      parameters:
+        - $ref: '#/components/parameters/ServerId'
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                server_status:
-                  type: string
-                  enum: [started, stopped]
-                cpu_usage:
-                  type: number
-                ram_usage:
-                  type: number
-                storage_usage:
-                  type: number
-                hosting_node:
-                  type: string
+              $ref: '#/components/schemas/ServerUpdate'
       responses:
         '200':
           description: Serverstatus erfolgreich aktualisiert
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
   /server/{id}/owner:
     get:
+      tags: [Servers]
       summary: Serverbesitzer abrufen
       parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
+        - $ref: '#/components/parameters/ServerId'
       responses:
         '200':
           description: Serverbesitzer erfolgreich abgerufen
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  owner:
-                    type: string
+                $ref: '#/components/schemas/ServerOwner'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /server/{id}/{action}:
+    post:
+      tags: [Servers]
+      summary: Control server state
+      parameters:
+        - $ref: '#/components/parameters/ServerId'
+        - $ref: '#/components/parameters/Action'
+      responses:
+        '200':
+          description: Server action performed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActionResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /server/{id}/command:
+    post:
+      tags: [Servers]
+      summary: Send command to server console
+      parameters:
+        - $ref: '#/components/parameters/ServerId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ServerCommand'
+      responses:
+        '200':
+          description: Command executed successfully
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /files:
+    get:
+      tags: [Files]
+      summary: Get list of server files
+      responses:
+        '200':
+          description: List of server files
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/File'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /console:
+    get:
+      tags: [Console]
+      summary: WebSocket endpoint for console updates
+      description: Returns a WebSocket connection that streams server console output
+      responses:
+        '101':
+          description: Switching Protocols
+
+components:
+  schemas:
+    UserCreate:
+      type: object
+      required:
+        - discord_id
+        - username
+      properties:
+        discord_id:
+          type: string
+          example: "123456789012345678"
+        username:
+          type: string
+          example: "minecraft_user"
+
+    UserResponse:
+      type: object
+      properties:
+        user_id:
+          type: integer
+          example: 42
+        discord_id:
+          type: string
+        username:
+          type: string
+
+    ServerDetails:
+      type: object
+      properties:
+        server_name:
+          type: string
+          example: "Survival Server"
+        server_status:
+          type: string
+          enum: [running, stopped, starting, stopping, error]
+          example: "running"
+        created_at:
+          type: string
+          format: date-time
+          example: "2023-01-01T12:00:00Z"
+        cpu_usage:
+          type: number
+          format: float
+          example: 23.5
+        ram_usage:
+          type: number
+          format: float
+          example: 2048.0
+        storage_usage:
+          type: number
+          format: float
+          example: 10240.5
+        hosting_node:
+          type: string
+          example: "node-01"
+
+    ServerUpdate:
+      type: object
+      properties:
+        server_name:
+          type: string
+        server_status:
+          type: string
+          enum: [running, stopped, maintenance]
+        cpu_usage:
+          type: number
+        ram_usage:
+          type: number
+        storage_usage:
+          type: number
+        hosting_node:
+          type: string
+
+    ServerOwner:
+      type: object
+      properties:
+        owner:
+          type: string
+          example: "user123"
+
+    ActionResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Server restart initiated"
+
+    ServerCommand:
+      type: object
+      required:
+        - command
+      properties:
+        command:
+          type: string
+          example: "say Hello World!"
+
+    File:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "server.properties"
+        size:
+          type: number
+          example: 1024
+        modified:
+          type: string
+          format: date-time
+          example: "2023-01-01T12:00:00Z"
+
+  parameters:
+    UserId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+      description: Benutzer-ID
+
+    ServerId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+      description: Server-ID
+
+    Action:
+      name: action
+      in: path
+      required: true
+      schema:
+        type: string
+        enum: [start, stop, restart]
+      description: Aktion für Serverzustand
+
+  responses:
+    BadRequest:
+      description: Ungültige Anfrage
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "Invalid request parameters"
+
+    NotFound:
+      description: Ressource nicht gefunden
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "Resource not found"
+
+    ServerError:
+      description: Interner Serverfehler
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "Internal server error"
